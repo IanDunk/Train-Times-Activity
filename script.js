@@ -1,4 +1,3 @@
-
 var config = {
     apiKey: "AIzaSyDdqG89B02FSAO_r0H-MW2xZ4VFXJE4MHA",
     authDomain: "train-times-activity.firebaseapp.com",
@@ -7,7 +6,6 @@ var config = {
     storageBucket: "",
     messagingSenderId: "84980336688"
 };
-
 firebase.initializeApp(config);
 
 var database = firebase.database();
@@ -18,8 +16,8 @@ $("#add-train-btn").on("click", function (event) {
 
     // Grabs user input
     var trainName = $("#train-name-input").val().trim();
-    var trainDestination = $("#destination-input").val().trim();
-    var trainStart = moment($("#start-input").val().trim(), "DD/MM/YY").format("X");
+    var trainDestination = $("#destination-input").val().trim();   
+    var trainStart = $("#start-input").val().trim();
     var trainFrequency = $("#frequency-input").val().trim();
 
     // Creates local "temporary" object for holding train data
@@ -66,24 +64,21 @@ database.ref().on("child_added", function (childSnapshot, prevChildKey) {
     console.log(trainStart);
     console.log(trainFrequency);
 
-    // Prettify the train start CHANGE!!!
-    var trainStartPretty = moment.unix(trainStart).format("MM/DD/YY");
+    // converts trainTime to moment stamp
+    var trainStartConverted = moment(trainStart, "hh:mm");
+    
+    var minutesAway = moment().diff(moment(trainStartConverted), "minutes") % trainFrequency; 
 
-    // Calculate the months worked using hardcore math
-    // To calculate the months worked
-    var trainMonths = moment().diff(moment.unix(trainStart, "X"), "months");
-    console.log(trainMonths);
+    // If minutesAway is getting the minutes away from the previous train, switch to minutes from next train
+    if(minutesAway > 0) {
+        minutesAway = trainFrequency - minutesAway;
+    } else {
+        minutesAway = Math.abs(minutesAway);
+    }
 
+    var nextArrival = moment().add(minutesAway, 'minutes').format("LT");
 
     // Add each train's data into the table
     $("#trains-table > tbody").append("<tr><td>" + trainName + "</td><td>" + trainDestination + "</td><td>" +
-        trainStartPretty + "</td><td>" + trainMonths + "</td><td>" + trainFrequency + "</td></tr>");
+        trainFrequency + "</td><td>" + nextArrival + "</td><td>" + minutesAway + "</td></tr>");
 });
-
-  // Example Time Math
-  // -----------------------------------------------------------------------------
-  // Assume Employee start date of January 1, 2015
-  // Assume current date is March 1, 2016
-
-  // We know that this is 15 months.
-  // Now we will create code in moment.js to confirm that any attempt we use mets this test case
